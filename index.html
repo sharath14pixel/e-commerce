@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kiosk Co. — Stationery &amp; Desk</title>
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/components.css" />
+  <link rel="stylesheet" href="./css/responsive.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to catalogue</a>
+
+  <div class="announcement-bar">
+    <p class="announcement-bar__text">
+      Complimentary delivery on orders ₹500+ &middot; Use <strong>SAVE10</strong> (10% off) or <strong>FLAT50</strong> (₹50 off ₹300+)
+    </p>
+  </div>
+
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="./index.html" aria-label="Kiosk Co. Home">
+        <span class="brand__mark" aria-hidden="true">KC</span>
+        <span class="brand__text">
+          <span class="brand__name">Kiosk Co.</span>
+          <span class="brand__tag">Stationery &amp; Desk</span>
+        </span>
+      </a>
+
+      <div class="site-header__search">
+        <label class="sr-only" for="search-input">Search products</label>
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          id="search-input"
+          class="search-input"
+          type="search"
+          placeholder="Search notebooks, brass pens, risers..."
+          autocomplete="off"
+        />
+      </div>
+
+      <nav class="site-header__actions" aria-label="Shop utilities">
+        <button
+          id="theme-toggle"
+          class="btn btn--ghost btn--icon"
+          type="button"
+          aria-label="Switch to dark theme"
+          aria-pressed="false"
+        >
+          <span id="theme-icon" aria-hidden="true">☾</span>
+          <span class="btn__label-desktop" id="theme-label">Dark</span>
+        </button>
+
+        <button
+          id="cart-toggle"
+          class="btn btn--primary cart-trigger"
+          type="button"
+          aria-label="Cart, 0 items"
+          aria-controls="cart-drawer"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true">Cart</span>
+          <span id="cart-badge" class="cart-trigger__badge" aria-hidden="true">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" class="container main-content">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero__grid">
+        <div class="hero__copy">
+          <p class="hero__eyebrow">Studio Edition &middot; Everyday Objects</p>
+          <h1 id="page-title" class="hero__title">Kiosk Co. Stationery &amp; Desk</h1>
+          <p class="hero__subtitle">
+            Tactile tools crafted for deep work—from solid brass pens and 100gsm lay-flat notebooks to milled walnut trays and merino desk mats.
+          </p>
+
+          <div class="hero__cta-row">
+            <a class="btn btn--primary" href="#catalogue-heading">Explore Collection</a>
+            <span class="hero__perk">Free delivery ₹500+</span>
+            <span class="hero__perk">Demo storefront</span>
+          </div>
+        </div>
+
+        <div class="hero__visual">
+          <img
+            class="hero__image"
+            src="./assets/images/hero-desk.svg"
+            alt="Minimalist studio desk with linen notebook, walnut pen tray, brass pen, and espresso cup"
+          />
+          <div class="hero__float-card">
+            <span class="hero__float-title">12 Curated Pieces</span>
+            <span class="hero__float-meta">Stationery &middot; Desk &middot; Tech &middot; Bags</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="catalogue" aria-labelledby="catalogue-heading">
+      <div class="catalogue__toolbar">
+        <div class="catalogue__heading-row">
+          <h2 id="catalogue-heading" class="section-title">Catalogue</h2>
+          <p id="results-count" class="results-count" aria-live="polite" aria-atomic="true"></p>
+        </div>
+
+        <div class="catalogue__controls">
+          <div id="category-filters" class="filter-chips" role="group" aria-label="Filter by category"></div>
+
+          <div class="sort-control">
+            <label class="sort-control__label" for="sort-select">Sort by</label>
+            <select id="sort-select" class="sort-control__select">
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name-asc">Name: A to Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="product-grid" class="product-grid" aria-live="off"></div>
+      <div id="catalogue-empty" class="empty-state" hidden></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p class="site-footer__brand">Kiosk Co. Stationery &amp; Desk — Portfolio Demo Store</p>
+      <p class="site-footer__note">
+        All products, brands, and prices are fictional. Demo checkout only; no payment is processed.
+      </p>
+    </div>
+  </footer>
+
+  <div id="cart-backdrop" class="drawer-backdrop" hidden></div>
+
+  <aside
+    id="cart-drawer"
+    class="cart-drawer"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cart-title"
+    hidden
+  >
+    <div class="cart-drawer__header">
+      <h2 id="cart-title" class="cart-drawer__title">Your Cart</h2>
+      <button
+        id="cart-close"
+        class="btn btn--ghost btn--icon"
+        type="button"
+        aria-label="Close cart"
+      >
+        <span aria-hidden="true">✕</span>
+      </button>
+    </div>
+
+    <div class="cart-drawer__body">
+      <div id="delivery-hint" class="delivery-hint" aria-live="polite"></div>
+      <div id="cart-content" class="cart-content"></div>
+    </div>
+
+    <div id="cart-footer" class="cart-drawer__footer"></div>
+  </aside>
+
+  <dialog
+    id="product-dialog"
+    class="product-dialog"
+    aria-labelledby="product-dialog-title"
+  >
+    <div class="product-dialog__surface">
+      <div class="product-dialog__header">
+        <span id="product-dialog-crumb" class="product-dialog__crumb"></span>
+        <button
+          id="product-dialog-close"
+          class="btn btn--ghost btn--icon"
+          type="button"
+          aria-label="Close product details"
+        >
+          <span aria-hidden="true">✕</span>
+        </button>
+      </div>
+      <div id="product-dialog-body" class="product-dialog__body"></div>
+    </div>
+  </dialog>
+
+  <dialog
+    id="checkout-dialog"
+    class="checkout-dialog"
+    aria-labelledby="checkout-title"
+    aria-describedby="checkout-banner"
+  >
+    <div class="checkout-dialog__surface">
+      <div class="checkout-dialog__header">
+        <h2 id="checkout-title" class="checkout-dialog__title">Order Preview</h2>
+        <button
+          id="checkout-close-top"
+          class="btn btn--ghost btn--icon"
+          type="button"
+          aria-label="Close order preview"
+        >
+          <span aria-hidden="true">✕</span>
+        </button>
+      </div>
+
+      <p id="checkout-banner" class="demo-banner">
+        DEMONSTRATION ONLY: no payment is taken
+      </p>
+
+      <div id="checkout-body" class="checkout-dialog__body"></div>
+    </div>
+  </dialog>
+
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

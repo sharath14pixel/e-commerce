@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kiosk Co. — Unit Tests</title>
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/components.css" />
+</head>
+<body>
+  <main class="container main-content">
+    <header class="hero">
+      <p class="hero__eyebrow">Automated Verification</p>
+      <h1 class="hero__title">Kiosk Co. — Cart &amp; Totals Test Suite</h1>
+      <p id="test-summary" class="hero__subtitle">Running tests...</p>
+    </header>
+
+    <section aria-labelledby="results-heading">
+      <h2 id="results-heading" class="section-title">Test Results</h2>
+      <ul id="test-results" class="order-items"></ul>
+    </section>
+  </main>
+
+  <script type="module">
+    import { SHOP_CONFIG } from "./js/data.js";
+    import { addToCart, changeQuantity, removeItem, clearCart } from "./js/cart.js";
+    import { totals, formatMoney } from "./js/totals.js";
+    import { CART_STORAGE_KEY, loadCart, validateCartData } from "./js/storage.js";
+
+    const resultsList = document.getElementById("test-results");
+    const summaryEl = document.getElementById("test-summary");
+    let passed = 0;
+    let failed = 0;
+
+    function assertEqual(actual, expected, label) {
+      const a = JSON.stringify(actual);
+      const e = JSON.stringify(expected);
+      if (a !== e) {
+        throw new Error(`${label} — expected ${e}, got ${a}`);
+      }
+    }
+
+    function test(name, fn) {
+      const li = document.createElement("li");
+      li.className = "order-items__row";
+      const nameSpan = document.createElement("span");
+      const statusSpan = document.createElement("span");
+
+      try {
+        fn();
+        passed += 1;
+        nameSpan.textContent = name;
+        statusSpan.textContent = "PASS";
+        statusSpan.className = "summary-list__discount";
+      } catch (err) {
+        failed += 1;
+        nameSpan.textContent = `${name}: ${err.message}`;
+        statusSpan.textContent = "FAIL";
+        statusSpan.className = "coupon-box__feedback--error";
+      }
+
+      li.append(nameSpan, statusSpan);
+      resultsList.appendChild(li);
+    }
+
+    // 1. Cart operations
+    test("addToCart adds a new item and increments existing item", () => {
+      let cart = clearCart();
+      cart = addToCart(cart, 101);
+      assertEqual(cart, { "101": 1 }, "first add");
+      cart = addToCart(cart, 101);
+      assertEqual(cart, { "101": 2 }, "second add");
+    });
+
+    test("addToCart safely ignores unknown product ids", () => {
+      const cart = addToCart({}, 99999);
+      assertEqual(cart, {}, "unknown id ignored");
+    });
+
+    test("changeQuantity removes item when reaching 0 or below", () => {
+      let cart = { "101": 2 };
+      cart = changeQuantity(cart, 101, -2);
+      assertEqual(cart, {}, "quantity 0 removes key");
+      cart = changeQuantity({ "101": 1 }, 101, -5);
+      assertEqual(cart, {}, "negative quantity removes key");
+    });
+
+    test("changeQuantity enforces maxQtyPerItem cap", () => {
+      let cart = { "101": 8 };
+      cart = changeQuantity(cart, 101, 5);
+      assertEqual(cart, { "101": SHOP_CONFIG.maxQtyPerItem }, "capped at 10");
+    });
+
+    test("changeQuantity ignores non-integer deltas", () => {
+      const cart = changeQuantity({ "101": 2 }, 101, 1.5);
+      assertEqual(cart, { "101": 2 }, "float delta ignored");
+    });
+
+    test("removeItem removes target item and leaves empty cart when last item removed", () => {
+      let cart = { "101": 2, "102": 1 };
+      cart = removeItem(cart, 101);
+      assertEqual(cart, { "102": 1 }, "101 removed");
+      cart = removeItem(cart, 102);
+      assertEqual(cart, {}, "last item removed");
+    });
+
+    // 2. Totals & delivery threshold (0, 499, 500, 501)
+    test("totals at subtotal 0 returns 0 delivery and 0 total", () => {
+      const res = totals({});
+      assertEqual(
+        { itemCount: res.itemCount, subtotal: res.subtotal, delivery: res.delivery, total: res.total },
+        { itemCount: 0, subtotal: 0, delivery: 0, total: 0 },
+        "empty cart totals"
+      );
+    });
+
+    test("totals at subtotal 499 (₹490 + ₹9? using ₹490 item 402) charges ₹40 delivery", () => {
+      // Product 402 is ₹490 (< 500)
+      const res = totals({ "402": 1 });
+      assertEqual(res.subtotal, 490, "subtotal 490");
+      assertEqual(res.delivery, 40, "delivery 40 below 500");
+      assertEqual(res.total, 530, "total 530");
+    });
+
+    test("totals at subtotal exactly 500 (2×180 + 140? 101×1 + 102×1 = 500) has free delivery", () => {
+      // 101 (180) + 102 (320) = 500
+      const res = totals({ "101": 1, "102": 1 });
+      assertEqual(res.subtotal, 500, "subtotal 500");
+      assertEqual(res.delivery, 0, "delivery 0 at 500");
+      assertEqual(res.total, 500, "total 500");
+    });
+
+    test("totals at subtotal 500+ (e.g., 103×1 + 402×1 = 610, or 203 = 540) has free delivery", () => {
+      // 203 is 540 (> 500)
+      const res = totals({ "203": 1 });
+      assertEqual(res.subtotal, 540, "subtotal 540");
+      assertEqual(res.delivery, 0, "delivery 0 above 500");
+      assertEqual(res.total, 540, "total 540");
+    });
+
+    // 3. Coupons & floating-point rounding
+    test("SAVE10 applies 10% discount case-insensitively", () => {
+      // 101 (180) -> 10% = 18, delivery = 40, total = 180 - 18 + 40 = 202
+      const res = totals({ "101": 1 }, "save10");
+      assertEqual(res.discount, 18, "10% of 180");
+      assertEqual(res.total, 202, "total with SAVE10");
+    });
+
+    test("FLAT50 applies ₹50 off when subtotal >= 300 and rejects below 300", () => {
+      const below = totals({ "101": 1 }, "FLAT50"); // 180 < 300
+      assertEqual(below.couponResult.valid, false, "rejected below 300");
+      assertEqual(below.discount, 0, "no discount below 300");
+
+      const above = totals({ "102": 1 }, "flat50"); // 320 >= 300
+      assertEqual(above.couponResult.valid, true, "accepted at 320");
+      assertEqual(above.discount, 50, "flat 50 discount");
+      assertEqual(above.total, 310, "320 - 50 + 40 = 310");
+    });
+
+    test("floating-point rounding avoids precision drift", () => {
+      // 103 (120) -> 10% = 12; 101(180) + 103(120) = 300; test 120 * 0.1
+      const res = totals({ "103": 1 }, "SAVE10");
+      assertEqual(res.discount, 12, "exact 2-decimal discount");
+      assertEqual(Number.isInteger(res.total * 100), true, "no float drift");
+    });
+
+    // 4. formatMoney
+    test("formatMoney formats INR whole and fractional amounts", () => {
+      assertEqual(formatMoney(500), "₹500", "whole number");
+      assertEqual(formatMoney(1250), "₹1,250", "Indian comma grouping");
+      assertEqual(formatMoney(108.5), "₹108.50", "fractional 2 decimals");
+    });
+
+    // 5. Storage validation
+    test("validateCartData drops unknown ids, clamps max qty, and rejects invalid values", () => {
+      const sanitized = validateCartData({
+        "101": 3,
+        "9999": 2,
+        "102": 99,
+        "103": -4,
+        "201": "not-a-number",
+      });
+      assertEqual(sanitized, { "101": 3, "102": 10 }, "sanitized cart");
+      assertEqual(validateCartData(["bad"]), {}, "array payload rejected");
+    });
+
+    test("loadCart recovers gracefully from corrupted JSON in localStorage", () => {
+      const previous = window.localStorage.getItem(CART_STORAGE_KEY);
+      window.localStorage.setItem(CART_STORAGE_KEY, "{corrupted-json!!!");
+      const loaded = loadCart();
+      assertEqual(loaded, {}, "empty cart on corrupted JSON");
+      if (previous === null) {
+        window.localStorage.removeItem(CART_STORAGE_KEY);
+      } else {
+        window.localStorage.setItem(CART_STORAGE_KEY, previous);
+      }
+    });
+
+    summaryEl.textContent = `${passed} passed, ${failed} failed (${passed + failed} total tests).`;
+  </script>
+</body>
+</html>
